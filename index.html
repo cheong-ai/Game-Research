@@ -8,31 +8,54 @@
 </head>
 <body>
 
-  <header class="header">
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="메뉴 열기">&#9776;</button>
-    <h1 class="header__title">
-      <span class="header__title-accent">GD</span> 리서치 뷰어
-    </h1>
+  <!-- Header -->
+  <header class="header" role="banner">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="메뉴 열기" aria-expanded="false">&#9776;</button>
+
+    <div class="header__brand">
+      <a href="#" class="header__title" id="homeLink" aria-label="홈으로 이동">
+        <span class="header__title-accent">GD</span> 리서치 뷰어
+      </a>
+    </div>
+
+    <!-- Breadcrumb (문서 뷰에서만 표시) -->
+    <nav class="header__breadcrumb" id="breadcrumb" aria-label="탐색 경로" style="display:none">
+      <span class="header__breadcrumb-sep" aria-hidden="true">/</span>
+      <span class="header__breadcrumb-item header__breadcrumb-item--category" id="breadcrumbCategory"></span>
+      <span class="header__breadcrumb-sep" aria-hidden="true">/</span>
+      <span class="header__breadcrumb-item header__breadcrumb-item--current" id="breadcrumbTitle"></span>
+    </nav>
   </header>
 
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" role="presentation"></div>
 
-  <aside class="sidebar" id="sidebar">
+  <!-- Left Sidebar: Document list -->
+  <aside class="sidebar" id="sidebar" aria-label="문서 목록">
     <div id="docList"></div>
-    <nav class="sidebar__toc" id="tocSection" style="display:none">
-      <div class="sidebar__toc-title">목차</div>
-      <ul class="sidebar__toc-list" id="tocList"></ul>
-    </nav>
   </aside>
 
-  <main class="main">
+  <!-- Main content -->
+  <main class="main" id="mainArea" role="main">
     <div class="main__inner" id="mainContent">
-      <!-- 초기 콘텐츠: JS가 교체함 -->
+      <!-- Loading state -->
+      <div class="loading-state" id="loadingState" aria-live="polite" aria-label="로딩 중">
+        <div class="loading-spinner" role="status" aria-hidden="true"></div>
+        <p class="loading-state__text">문서 목록을 불러오는 중...</p>
+      </div>
     </div>
   </main>
 
+  <!-- Right TOC Panel (문서 뷰에서만 표시) -->
+  <aside class="toc-panel" id="tocPanel" aria-label="목차">
+    <div class="toc-panel__title">목차</div>
+    <ul class="toc-panel__list" id="tocList"></ul>
+  </aside>
+
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
+    /* ===== Constants ===== */
+
     const CATEGORY_LABELS = {
       game: '게임 분석',
       market: '시장 분석',
@@ -41,7 +64,6 @@
       funnel: '퍼널 분석',
     };
 
-    // 카테고리별 카드 태그 색상 클래스
     const CATEGORY_CSS = {
       game: 'doc-card__category--game',
       market: 'doc-card__category--market',
@@ -50,21 +72,137 @@
       funnel: 'doc-card__category--funnel',
     };
 
+    /* ===== State ===== */
+
     const state = { docs: [], current: null, filter: 'all' };
 
-    // --- Sidebar toggle (mobile) ---
+    /* ===== DOM References ===== */
+
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    document.getElementById('sidebarToggle').addEventListener('click', () => {
-      sidebar.classList.toggle('sidebar--open');
-      overlay.classList.toggle('sidebar-overlay--visible');
-    });
-    overlay.addEventListener('click', () => {
-      sidebar.classList.remove('sidebar--open');
-      overlay.classList.remove('sidebar-overlay--visible');
+    const mainContent = document.getElementById('mainContent');
+    const tocPanel = document.getElementById('tocPanel');
+    const tocList = document.getElementById('tocList');
+    const breadcrumb = document.getElementById('breadcrumb');
+    const breadcrumbCategory = document.getElementById('breadcrumbCategory');
+    const breadcrumbTitle = document.getElementById('breadcrumbTitle');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+
+    /* ===== Header: Home link ===== */
+
+    document.getElementById('homeLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      closeSidebar();
+      history.pushState(null, '', window.location.pathname);
+      state.current = null;
+      state.filter = 'all';
+      showDashboard();
     });
 
-    // --- Frontmatter parser ---
+    /* ===== Mobile Sidebar Toggle ===== */
+
+    sidebarToggle.addEventListener('click', () => {
+      const isOpen = sidebar.classList.toggle('sidebar--open');
+      overlay.classList.toggle('sidebar-overlay--visible', isOpen);
+      sidebarToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    function closeSidebar() {
+      sidebar.classList.remove('sidebar--open');
+      overlay.classList.remove('sidebar-overlay--visible');
+      sidebarToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    /* ===== Breadcrumb ===== */
+
+    function showBreadcrumb(doc) {
+      const cat = doc.category || 'etc';
+      breadcrumbCategory.textContent = CATEGORY_LABELS[cat] || cat;
+      breadcrumbTitle.textContent = doc.title;
+      breadcrumb.style.display = 'flex';
+    }
+
+    function hideBreadcrumb() {
+      breadcrumb.style.display = 'none';
+    }
+
+    /* ===== TOC ===== */
+
+    function buildToc(contentEl) {
+      const headings = contentEl.querySelectorAll('h2, h3');
+      tocList.innerHTML = '';
+
+      if (headings.length === 0) {
+        hideToc();
+        return;
+      }
+
+      headings.forEach((h, i) => {
+        const id = 'heading-' + i;
+        h.id = id;
+        const li = document.createElement('li');
+        const depth = h.tagName === 'H3' ? 3 : 2;
+        li.className = `toc-panel__item toc-panel__item--depth-${depth}`;
+        const a = document.createElement('a');
+        a.href = 'javascript:void(0)';
+        a.textContent = h.textContent;
+        a.dataset.headingId = id;
+        li.appendChild(a);
+        tocList.appendChild(li);
+      });
+
+      showToc();
+      initTocObserver(contentEl);
+    }
+
+    function showToc() {
+      document.body.classList.add('has-toc');
+    }
+
+    function hideToc() {
+      document.body.classList.remove('has-toc');
+      tocList.innerHTML = '';
+    }
+
+    // Smooth scroll on TOC link click
+    tocList.addEventListener('click', (e) => {
+      const a = e.target.closest('a[data-heading-id]');
+      if (!a) return;
+      e.preventDefault();
+      const target = document.getElementById(a.dataset.headingId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    // Intersection Observer for TOC active state
+    let tocObserver = null;
+
+    function initTocObserver(contentEl) {
+      if (tocObserver) tocObserver.disconnect();
+
+      const headings = contentEl.querySelectorAll('h2, h3, h4');
+      const rootMargin = `-${getComputedStyle(document.documentElement).getPropertyValue('--header-height').trim()} 0px -60% 0px`;
+
+      tocObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const link = tocList.querySelector(`[data-heading-id="${entry.target.id}"]`);
+          if (!link) return;
+          const item = link.parentElement;
+          if (entry.isIntersecting) {
+            tocList.querySelectorAll('.toc-panel__item--active').forEach(el => el.classList.remove('toc-panel__item--active'));
+            item.classList.add('toc-panel__item--active');
+          }
+        });
+      }, { rootMargin });
+
+      headings.forEach(h => tocObserver.observe(h));
+    }
+
+    /* ===== Frontmatter Parser ===== */
+
     function parseFrontmatter(text) {
       const match = text.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
       if (!match) return { meta: {}, body: text };
@@ -75,15 +213,18 @@
         const key = line.slice(0, idx).trim();
         let val = line.slice(idx + 1).trim();
         if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
-        if (val.startsWith('[') && val.endsWith(']')) {
-          val = val.slice(1, -1).split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        if (val.startsWith('[')) {
+          const closingIdx = val.lastIndexOf(']');
+          const inner = closingIdx !== -1 ? val.slice(1, closingIdx) : val.slice(1);
+          val = inner.split(',').map(s => s.trim().replace(/^["']|["']$/g, ''));
         }
         meta[key] = val;
       }
       return { meta, body: match[2] };
     }
 
-    // --- Build doc list (sidebar) ---
+    /* ===== Sidebar: Document List ===== */
+
     function buildDocList(docs) {
       const groups = {};
       for (const doc of docs) {
@@ -110,35 +251,8 @@
       }
     }
 
-    // --- Build TOC ---
-    function buildToc(contentEl) {
-      const tocSection = document.getElementById('tocSection');
-      const tocList = document.getElementById('tocList');
-      const headings = contentEl.querySelectorAll('h2, h3');
-      if (headings.length === 0) {
-        tocSection.style.display = 'none';
-        return;
-      }
-      tocList.innerHTML = '';
-      headings.forEach((h, i) => {
-        const id = 'heading-' + i;
-        h.id = id;
-        const li = document.createElement('li');
-        const depth = h.tagName === 'H3' ? 3 : 2;
-        li.className = `sidebar__toc-list--depth-${depth}`;
-        li.innerHTML = `<a href="#" data-scroll="${id}">${h.textContent}</a>`;
-        tocList.appendChild(li);
-      });
-      tocSection.style.display = '';
-      tocList.addEventListener('click', (e) => {
-        const link = e.target.closest('[data-scroll]');
-        if (!link) return;
-        e.preventDefault();
-        document.getElementById(link.dataset.scroll)?.scrollIntoView({ behavior: 'smooth' });
-      });
-    }
+    /* ===== Meta Card (Document header) ===== */
 
-    // --- Render meta card ---
     function renderMetaCard(meta) {
       if (!meta.title) return '';
       const rows = [];
@@ -168,10 +282,10 @@
       </div>`;
     }
 
-    // --- Render dashboard stats ---
+    /* ===== Dashboard Stats ===== */
+
     function renderStats(docs) {
       const total = docs.length;
-      // 카테고리별 집계
       const counts = {};
       for (const doc of docs) {
         const cat = doc.category || 'etc';
@@ -181,10 +295,8 @@
         .map(([cat, n]) => `<div class="stat-chip">
           <span>${CATEGORY_LABELS[cat] || cat}</span>
           <span class="stat-chip__count">${n}</span>
-        </div>`)
-        .join('');
-      return `
-        <div class="dashboard-stats" role="region" aria-label="문서 통계">
+        </div>`).join('');
+      return `<div class="dashboard-stats" role="region" aria-label="문서 통계">
           <div class="stat-chip">
             <span>전체 문서</span>
             <span class="stat-chip__count">${total}</span>
@@ -193,7 +305,8 @@
         </div>`;
     }
 
-    // --- Render filter tabs ---
+    /* ===== Filter Tabs ===== */
+
     function renderFilterTabs(docs, activeFilter) {
       const cats = [...new Set(docs.map(d => d.category || 'etc'))];
       const allTab = `<button class="filter-tab ${activeFilter === 'all' ? 'filter-tab--active' : ''}"
@@ -205,7 +318,8 @@
       return `<div class="dashboard-filters" role="group" aria-label="카테고리 필터">${allTab}${catTabs}</div>`;
     }
 
-    // --- Render single doc card ---
+    /* ===== Document Card ===== */
+
     function renderDocCard(doc) {
       const cat = doc.category || 'etc';
       const catLabel = CATEGORY_LABELS[cat] || cat;
@@ -216,31 +330,60 @@
       const genreBadges = genres.map(g => `<span class="badge badge--genre">${g}</span>`).join('');
       const platformBadges = platforms.map(p => `<span class="badge badge--platform">${p}</span>`).join('');
       const hasPath = !!doc.path;
-      // path가 없는 문서는 카드를 disabled 처리
       const disabledAttr = hasPath ? '' : ' aria-disabled="true" tabindex="-1" style="opacity:0.45;cursor:default;pointer-events:none;"';
+
+      // Thumbnail
+      const gradient = doc.thumbnailGradient || 'linear-gradient(135deg, #1e1e36 0%, #2a2a4a 100%)';
+      let thumbnailHtml;
+      if (doc.thumbnail) {
+        thumbnailHtml = `
+          <div class="doc-card__thumbnail">
+            <img
+              class="doc-card__thumbnail-img"
+              src="${doc.thumbnail}"
+              alt="${doc.title} 대표 이미지"
+              loading="lazy"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+            >
+            <div class="doc-card__thumbnail-fallback" style="display:none;background:${gradient};" aria-hidden="true"></div>
+            <span class="doc-card__category ${catClass}" aria-label="${catLabel}">${catLabel}</span>
+          </div>`;
+      } else {
+        thumbnailHtml = `
+          <div class="doc-card__thumbnail">
+            <div class="doc-card__thumbnail-fallback" style="background:${gradient};" aria-hidden="true"></div>
+            <span class="doc-card__category ${catClass}" aria-label="${catLabel}">${catLabel}</span>
+          </div>`;
+      }
+
       return `
         <a class="doc-card" href="${hasPath ? '#' + doc.id : 'javascript:void(0)'}"
            role="article" aria-label="${doc.title} (${catLabel})"${disabledAttr}>
-          <span class="doc-card__category ${catClass}">${catLabel}</span>
-          <div class="doc-card__title">${doc.title}</div>
-          ${dateStr}
-          <div class="doc-card__badges">
-            ${genreBadges}${platformBadges}
+          ${thumbnailHtml}
+          <div class="doc-card__body">
+            <div class="doc-card__title">${doc.title}</div>
+            ${dateStr}
+            <div class="doc-card__badges">
+              ${genreBadges}${platformBadges}
+            </div>
           </div>
         </a>`;
     }
 
-    // --- Render dashboard ---
-    function renderDashboard() {
-      const mainContent = document.getElementById('mainContent');
-      mainContent.classList.add('main__inner--dashboard');
+    /* ===== Render Dashboard ===== */
 
-      // 사이드바 active 해제
+    function showDashboard() {
+      // Sidebar active 해제
       document.querySelectorAll('.sidebar__item').forEach(el => {
         el.classList.remove('sidebar__item--active');
       });
-      // TOC 숨김
-      document.getElementById('tocSection').style.display = 'none';
+
+      // TOC / Breadcrumb 숨김
+      hideToc();
+      hideBreadcrumb();
+
+      // Dashboard layout
+      mainContent.classList.add('main__inner--dashboard');
 
       const filtered = state.filter === 'all'
         ? state.docs
@@ -265,9 +408,8 @@
       mainContent.querySelectorAll('.filter-tab').forEach(btn => {
         btn.addEventListener('click', () => {
           state.filter = btn.dataset.filter;
-          renderDashboard();
+          showDashboard();
         });
-        // 키보드 접근성: Enter/Space
         btn.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -279,27 +421,37 @@
       window.scrollTo(0, 0);
     }
 
-    // --- Load & render document ---
+    /* ===== Load & Render Document ===== */
+
     async function loadDoc(id) {
       const doc = state.docs.find(d => d.id === id);
       if (!doc || !doc.path) return;
       state.current = id;
 
-      // Update active sidebar item
+      // Sidebar active
       document.querySelectorAll('.sidebar__item').forEach(el => {
         el.classList.toggle('sidebar__item--active', el.dataset.id === id);
       });
 
-      // Close mobile sidebar
-      sidebar.classList.remove('sidebar--open');
-      overlay.classList.remove('sidebar-overlay--visible');
+      // Mobile sidebar 닫기
+      closeSidebar();
 
+      // 로딩 상태 표시
+      mainContent.classList.remove('main__inner--dashboard');
+      mainContent.innerHTML = `
+        <div class="loading-state" aria-live="polite">
+          <div class="loading-spinner" role="status" aria-hidden="true"></div>
+          <p class="loading-state__text">문서를 불러오는 중...</p>
+        </div>`;
+
+      // Breadcrumb 표시
+      showBreadcrumb(doc);
+
+      // Fetch & parse
       const res = await fetch(doc.path);
       const text = await res.text();
       const { meta, body } = parseFrontmatter(text);
 
-      const mainContent = document.getElementById('mainContent');
-      mainContent.classList.remove('main__inner--dashboard');
       const html = marked.parse(body);
       mainContent.innerHTML = renderMetaCard(meta) + `<div class="content">${html}</div>`;
 
@@ -307,7 +459,8 @@
       window.scrollTo(0, 0);
     }
 
-    // --- Hash routing ---
+    /* ===== Hash Routing ===== */
+
     function onHashChange() {
       const hash = location.hash.slice(1);
       if (hash && state.docs.length > 0) {
@@ -315,34 +468,44 @@
         if (doc && doc.path) {
           loadDoc(hash);
         } else {
-          // path 없는 문서 해시 → 대시보드 유지
           state.current = null;
-          renderDashboard();
+          showDashboard();
         }
       } else if (!hash && state.docs.length > 0) {
-        // 해시 없으면 대시보드로
         state.current = null;
-        renderDashboard();
+        showDashboard();
       }
     }
+
     window.addEventListener('hashchange', onHashChange);
 
-    // --- Init ---
+    /* ===== Init ===== */
+
     (async () => {
-      const res = await fetch('./docs.json');
-      const data = await res.json();
-      const docs = data.documents || data;
-      state.docs = docs.map(d => ({
-        ...d,
-        id: d.id || (d.path
-          ? d.path.replace(/^.*\/research\//, '').replace(/\.md$/, '')
-          : d.title.toLowerCase().replace(/\s+/g, '-'))
-      }));
-      buildDocList(state.docs);
-      if (location.hash.length > 1) {
-        onHashChange();
-      } else {
-        renderDashboard();
+      try {
+        const res = await fetch('./docs.json');
+        const data = await res.json();
+        const docs = data.documents || data;
+        state.docs = docs.map(d => ({
+          ...d,
+          id: d.id || (d.path
+            ? d.path.replace(/^.*\/research\//, '').replace(/\.md$/, '')
+            : d.title.toLowerCase().replace(/\s+/g, '-'))
+        }));
+        buildDocList(state.docs);
+        if (location.hash.length > 1) {
+          onHashChange();
+        } else {
+          showDashboard();
+        }
+      } catch (err) {
+        mainContent.innerHTML = `
+          <div class="loading-state">
+            <p class="loading-state__text" style="color:var(--color-text-muted)">
+              문서 목록을 불러오지 못했습니다. 페이지를 새로고침 해주세요.
+            </p>
+          </div>`;
+        console.error('docs.json 로드 실패:', err);
       }
     })();
   </script>

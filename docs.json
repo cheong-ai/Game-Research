@@ -6,7 +6,9 @@
       "title": "포켓몬 포코피아 리서치",
       "date": "2026-03-18",
       "genre": ["생활 시뮬레이션", "샌드박스", "크래프팅"],
-      "platform": ["Nintendo Switch 2"]
+      "platform": ["Nintendo Switch 2"],
+      "thumbnail": "https://www.pokemon.com/static-assets/content-assets/cms2/img/video-games/_tiles/pokemon-legends-z-a/169/image.jpg",
+      "thumbnailGradient": "linear-gradient(135deg, #FFD700 0%, #FF6B35 50%, #C0392B 100%)"
     },
     {
       "path": "./docs/research/game/nodebuster-20260318.md",
@@ -14,7 +16,9 @@
       "title": "Nodebuster 리서치",
       "date": "2026-03-18",
       "genre": ["인크리멘탈", "로그라이트", "서바이벌"],
-      "platform": ["PC(Steam)"]
+      "platform": ["PC(Steam)"],
+      "thumbnail": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3107330/header.jpg",
+      "thumbnailGradient": "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)"
     },
     {
       "path": "./docs/research/game/defrag-20260318.md",
@@ -22,7 +26,9 @@
       "title": "DEFRAG 리서치",
       "date": "2026-03-18",
       "genre": ["인크리멘탈", "아케이드 슈터", "서바이벌"],
-      "platform": ["PC(Steam)"]
+      "platform": ["PC(Steam)"],
+      "thumbnail": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4028640/header.jpg",
+      "thumbnailGradient": "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)"
     },
     {
       "path": "./docs/research/player/incremental-roguelite-20260318.md",
@@ -30,7 +36,9 @@
       "title": "인크리멘탈 x 로그라이트 플레이어 리서치",
       "date": "2026-03-18",
       "genre": ["인크리멘탈", "로그라이트"],
-      "platform": ["모바일", "PC", "콘솔"]
+      "platform": ["모바일", "PC", "콘솔"],
+      "thumbnail": null,
+      "thumbnailGradient": "linear-gradient(135deg, #134e5e 0%, #71b280 100%)"
     }
   ]
 }
