@@ -1,0 +1,36 @@
+{
+  "documents": [
+    {
+      "path": "./docs/research/game/pokemon-pokopia-20260318.md",
+      "category": "game",
+      "title": "포켓몬 포코피아 리서치",
+      "date": "2026-03-18",
+      "genre": ["생활 시뮬레이션", "샌드박스", "크래프팅"],
+      "platform": ["Nintendo Switch 2"]
+    },
+    {
+      "path": "./docs/research/game/nodebuster-20260318.md",
+      "category": "game",
+      "title": "Nodebuster 리서치",
+      "date": "2026-03-18",
+      "genre": ["인크리멘탈", "로그라이트", "서바이벌"],
+      "platform": ["PC(Steam)"]
+    },
+    {
+      "path": "./docs/research/game/defrag-20260318.md",
+      "category": "game",
+      "title": "DEFRAG 리서치",
+      "date": "2026-03-18",
+      "genre": ["인크리멘탈", "아케이드 슈터", "서바이벌"],
+      "platform": ["PC(Steam)"]
+    },
+    {
+      "path": "./docs/research/player/incremental-roguelite-20260318.md",
+      "category": "player",
+      "title": "인크리멘탈 x 로그라이트 플레이어 리서치",
+      "date": "2026-03-18",
+      "genre": ["인크리멘탈", "로그라이트"],
+      "platform": ["모바일", "PC", "콘솔"]
+    }
+  ]
+}

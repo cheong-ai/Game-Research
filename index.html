@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>게임 리서치 뷰어</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <header class="header">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="메뉴 열기">&#9776;</button>
+    <h1 class="header__title">
+      <span class="header__title-accent">GD</span> 리서치 뷰어
+    </h1>
+  </header>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div id="docList"></div>
+    <nav class="sidebar__toc" id="tocSection" style="display:none">
+      <div class="sidebar__toc-title">목차</div>
+      <ul class="sidebar__toc-list" id="tocList"></ul>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="main__inner" id="mainContent">
+      <div class="content" id="welcome">
+        <h1>게임 리서치 뷰어</h1>
+        <p>왼쪽 문서 목록에서 리서치 문서를 선택하세요.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const CATEGORY_LABELS = {
+      game: '게임 분석',
+      market: '시장 분석',
+      player: '플레이어 분석',
+      liveops: '라이브옵스',
+      funnel: '퍼널 분석',
+    };
+
+    const state = { docs: [], current: null };
+
+    // --- Sidebar toggle (mobile) ---
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      sidebar.classList.toggle('sidebar--open');
+      overlay.classList.toggle('sidebar-overlay--visible');
+    });
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('sidebar--open');
+      overlay.classList.remove('sidebar-overlay--visible');
+    });
+
+    // --- Frontmatter parser ---
+    function parseFrontmatter(text) {
+      const match = text.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+      if (!match) return { meta: {}, body: text };
+      const meta = {};
+      for (const line of match[1].split('\n')) {
+        const idx = line.indexOf(':');
+        if (idx === -1) continue;
+        const key = line.slice(0, idx).trim();
+        let val = line.slice(idx + 1).trim();
+        if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+        if (val.startsWith('[') && val.endsWith(']')) {
+          val = val.slice(1, -1).split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        }
+        meta[key] = val;
+      }
+      return { meta, body: match[2] };
+    }
+
+    // --- Build doc list ---
+    function buildDocList(docs) {
+      const groups = {};
+      for (const doc of docs) {
+        const cat = doc.category || 'etc';
+        (groups[cat] ||= []).push(doc);
+      }
+      const container = document.getElementById('docList');
+      container.innerHTML = '';
+      for (const [cat, items] of Object.entries(groups)) {
+        const group = document.createElement('div');
+        group.className = 'sidebar__group';
+        group.innerHTML = `<div class="sidebar__group-header">${CATEGORY_LABELS[cat] || cat}</div>`;
+        const list = document.createElement('ul');
+        list.className = 'sidebar__list';
+        for (const doc of items) {
+          const li = document.createElement('li');
+          li.className = 'sidebar__item';
+          li.dataset.id = doc.id;
+          li.innerHTML = `<a href="#${doc.id}">${doc.title}</a>`;
+          list.appendChild(li);
+        }
+        group.appendChild(list);
+        container.appendChild(group);
+      }
+    }
+
+    // --- Build TOC ---
+    function buildToc(contentEl) {
+      const tocSection = document.getElementById('tocSection');
+      const tocList = document.getElementById('tocList');
+      const headings = contentEl.querySelectorAll('h2, h3');
+      if (headings.length === 0) {
+        tocSection.style.display = 'none';
+        return;
+      }
+      tocList.innerHTML = '';
+      headings.forEach((h, i) => {
+        const id = 'heading-' + i;
+        h.id = id;
+        const li = document.createElement('li');
+        const depth = h.tagName === 'H3' ? 3 : 2;
+        li.className = `sidebar__toc-list--depth-${depth}`;
+        li.innerHTML = `<a href="#" data-scroll="${id}">${h.textContent}</a>`;
+        tocList.appendChild(li);
+      });
+      tocSection.style.display = '';
+      tocList.addEventListener('click', (e) => {
+        const link = e.target.closest('[data-scroll]');
+        if (!link) return;
+        e.preventDefault();
+        document.getElementById(link.dataset.scroll)?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    // --- Render meta card ---
+    function renderMetaCard(meta) {
+      if (!meta.title) return '';
+      const rows = [];
+      if (meta.date) {
+        rows.push(`<div class="meta-card__row">
+          <span class="meta-card__label">날짜</span>
+          <span class="badge badge--default">${meta.date}</span>
+        </div>`);
+      }
+      if (meta.genre) {
+        const tags = Array.isArray(meta.genre) ? meta.genre : [meta.genre];
+        rows.push(`<div class="meta-card__row">
+          <span class="meta-card__label">장르</span>
+          ${tags.map(g => `<span class="badge badge--genre">${g}</span>`).join('')}
+        </div>`);
+      }
+      if (meta.platform) {
+        const tags = Array.isArray(meta.platform) ? meta.platform : [meta.platform];
+        rows.push(`<div class="meta-card__row">
+          <span class="meta-card__label">플랫폼</span>
+          ${tags.map(p => `<span class="badge badge--platform">${p}</span>`).join('')}
+        </div>`);
+      }
+      return `<div class="meta-card">
+        <div class="meta-card__title">${meta.title}</div>
+        ${rows.join('\n')}
+      </div>`;
+    }
+
+    // --- Load & render document ---
+    async function loadDoc(id) {
+      const doc = state.docs.find(d => d.id === id);
+      if (!doc) return;
+      state.current = id;
+
+      // Update active sidebar item
+      document.querySelectorAll('.sidebar__item').forEach(el => {
+        el.classList.toggle('sidebar__item--active', el.dataset.id === id);
+      });
+
+      // Close mobile sidebar
+      sidebar.classList.remove('sidebar--open');
+      overlay.classList.remove('sidebar-overlay--visible');
+
+      const res = await fetch(doc.path);
+      const text = await res.text();
+      const { meta, body } = parseFrontmatter(text);
+
+      const mainContent = document.getElementById('mainContent');
+      const html = marked.parse(body);
+      mainContent.innerHTML = renderMetaCard(meta) + `<div class="content">${html}</div>`;
+
+      buildToc(mainContent.querySelector('.content'));
+      window.scrollTo(0, 0);
+    }
+
+    // --- Hash routing ---
+    function onHashChange() {
+      const hash = location.hash.slice(1);
+      if (hash && state.docs.length > 0) {
+        loadDoc(hash);
+      }
+    }
+    window.addEventListener('hashchange', onHashChange);
+
+    // --- Init ---
+    (async () => {
+      const res = await fetch('./docs.json');
+      const data = await res.json();
+      const docs = data.documents || data;
+      // Generate id from path if missing: "../docs/research/game/foo.md" → "game/foo"
+      state.docs = docs.map(d => ({
+        ...d,
+        id: d.id || d.path.replace(/^.*\/research\//, '').replace(/\.md$/, '')
+      }));
+      buildDocList(state.docs);
+      if (location.hash.length > 1) {
+        onHashChange();
+      }
+    })();
+  </script>
+
+</body>
+</html>
