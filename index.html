@@ -27,10 +27,7 @@
 
   <main class="main">
     <div class="main__inner" id="mainContent">
-      <div class="content" id="welcome">
-        <h1>게임 리서치 뷰어</h1>
-        <p>왼쪽 문서 목록에서 리서치 문서를 선택하세요.</p>
-      </div>
+      <!-- 초기 콘텐츠: JS가 교체함 -->
     </div>
   </main>
 
@@ -44,7 +41,16 @@
       funnel: '퍼널 분석',
     };
 
-    const state = { docs: [], current: null };
+    // 카테고리별 카드 태그 색상 클래스
+    const CATEGORY_CSS = {
+      game: 'doc-card__category--game',
+      market: 'doc-card__category--market',
+      player: 'doc-card__category--player',
+      liveops: 'doc-card__category--liveops',
+      funnel: 'doc-card__category--funnel',
+    };
+
+    const state = { docs: [], current: null, filter: 'all' };
 
     // --- Sidebar toggle (mobile) ---
     const sidebar = document.getElementById('sidebar');
@@ -77,7 +83,7 @@
       return { meta, body: match[2] };
     }
 
-    // --- Build doc list ---
+    // --- Build doc list (sidebar) ---
     function buildDocList(docs) {
       const groups = {};
       for (const doc of docs) {
@@ -162,10 +168,121 @@
       </div>`;
     }
 
+    // --- Render dashboard stats ---
+    function renderStats(docs) {
+      const total = docs.length;
+      // 카테고리별 집계
+      const counts = {};
+      for (const doc of docs) {
+        const cat = doc.category || 'etc';
+        counts[cat] = (counts[cat] || 0) + 1;
+      }
+      const catChips = Object.entries(counts)
+        .map(([cat, n]) => `<div class="stat-chip">
+          <span>${CATEGORY_LABELS[cat] || cat}</span>
+          <span class="stat-chip__count">${n}</span>
+        </div>`)
+        .join('');
+      return `
+        <div class="dashboard-stats" role="region" aria-label="문서 통계">
+          <div class="stat-chip">
+            <span>전체 문서</span>
+            <span class="stat-chip__count">${total}</span>
+          </div>
+          ${catChips}
+        </div>`;
+    }
+
+    // --- Render filter tabs ---
+    function renderFilterTabs(docs, activeFilter) {
+      const cats = [...new Set(docs.map(d => d.category || 'etc'))];
+      const allTab = `<button class="filter-tab ${activeFilter === 'all' ? 'filter-tab--active' : ''}"
+        data-filter="all" aria-pressed="${activeFilter === 'all'}">전체</button>`;
+      const catTabs = cats.map(cat =>
+        `<button class="filter-tab ${activeFilter === cat ? 'filter-tab--active' : ''}"
+          data-filter="${cat}" aria-pressed="${activeFilter === cat}">${CATEGORY_LABELS[cat] || cat}</button>`
+      ).join('');
+      return `<div class="dashboard-filters" role="group" aria-label="카테고리 필터">${allTab}${catTabs}</div>`;
+    }
+
+    // --- Render single doc card ---
+    function renderDocCard(doc) {
+      const cat = doc.category || 'etc';
+      const catLabel = CATEGORY_LABELS[cat] || cat;
+      const catClass = CATEGORY_CSS[cat] || 'doc-card__category--etc';
+      const dateStr = doc.date ? `<div class="doc-card__date">${doc.date}</div>` : '';
+      const genres = Array.isArray(doc.genre) ? doc.genre : (doc.genre ? [doc.genre] : []);
+      const platforms = Array.isArray(doc.platform) ? doc.platform : (doc.platform ? [doc.platform] : []);
+      const genreBadges = genres.map(g => `<span class="badge badge--genre">${g}</span>`).join('');
+      const platformBadges = platforms.map(p => `<span class="badge badge--platform">${p}</span>`).join('');
+      const hasPath = !!doc.path;
+      // path가 없는 문서는 카드를 disabled 처리
+      const disabledAttr = hasPath ? '' : ' aria-disabled="true" tabindex="-1" style="opacity:0.45;cursor:default;pointer-events:none;"';
+      return `
+        <a class="doc-card" href="${hasPath ? '#' + doc.id : 'javascript:void(0)'}"
+           role="article" aria-label="${doc.title} (${catLabel})"${disabledAttr}>
+          <span class="doc-card__category ${catClass}">${catLabel}</span>
+          <div class="doc-card__title">${doc.title}</div>
+          ${dateStr}
+          <div class="doc-card__badges">
+            ${genreBadges}${platformBadges}
+          </div>
+        </a>`;
+    }
+
+    // --- Render dashboard ---
+    function renderDashboard() {
+      const mainContent = document.getElementById('mainContent');
+      mainContent.classList.add('main__inner--dashboard');
+
+      // 사이드바 active 해제
+      document.querySelectorAll('.sidebar__item').forEach(el => {
+        el.classList.remove('sidebar__item--active');
+      });
+      // TOC 숨김
+      document.getElementById('tocSection').style.display = 'none';
+
+      const filtered = state.filter === 'all'
+        ? state.docs
+        : state.docs.filter(d => (d.category || 'etc') === state.filter);
+
+      const cardsHtml = filtered.length > 0
+        ? filtered.map(renderDocCard).join('')
+        : `<div class="doc-grid__empty">해당 카테고리의 문서가 없습니다.</div>`;
+
+      mainContent.innerHTML = `
+        <div class="dashboard-heading">
+          <div class="dashboard-heading__title">리서치 문서</div>
+          <div class="dashboard-heading__sub">분석 문서를 선택해 내용을 확인하세요.</div>
+        </div>
+        ${renderStats(state.docs)}
+        ${renderFilterTabs(state.docs, state.filter)}
+        <div class="doc-grid" role="list" aria-label="문서 목록">
+          ${cardsHtml}
+        </div>`;
+
+      // 필터 탭 이벤트
+      mainContent.querySelectorAll('.filter-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.filter = btn.dataset.filter;
+          renderDashboard();
+        });
+        // 키보드 접근성: Enter/Space
+        btn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            btn.click();
+          }
+        });
+      });
+
+      window.scrollTo(0, 0);
+    }
+
     // --- Load & render document ---
     async function loadDoc(id) {
       const doc = state.docs.find(d => d.id === id);
-      if (!doc) return;
+      if (!doc || !doc.path) return;
       state.current = id;
 
       // Update active sidebar item
@@ -182,6 +299,7 @@
       const { meta, body } = parseFrontmatter(text);
 
       const mainContent = document.getElementById('mainContent');
+      mainContent.classList.remove('main__inner--dashboard');
       const html = marked.parse(body);
       mainContent.innerHTML = renderMetaCard(meta) + `<div class="content">${html}</div>`;
 
@@ -193,7 +311,18 @@
     function onHashChange() {
       const hash = location.hash.slice(1);
       if (hash && state.docs.length > 0) {
-        loadDoc(hash);
+        const doc = state.docs.find(d => d.id === hash);
+        if (doc && doc.path) {
+          loadDoc(hash);
+        } else {
+          // path 없는 문서 해시 → 대시보드 유지
+          state.current = null;
+          renderDashboard();
+        }
+      } else if (!hash && state.docs.length > 0) {
+        // 해시 없으면 대시보드로
+        state.current = null;
+        renderDashboard();
       }
     }
     window.addEventListener('hashchange', onHashChange);
@@ -203,14 +332,17 @@
       const res = await fetch('./docs.json');
       const data = await res.json();
       const docs = data.documents || data;
-      // Generate id from path if missing: "../docs/research/game/foo.md" → "game/foo"
       state.docs = docs.map(d => ({
         ...d,
-        id: d.id || d.path.replace(/^.*\/research\//, '').replace(/\.md$/, '')
+        id: d.id || (d.path
+          ? d.path.replace(/^.*\/research\//, '').replace(/\.md$/, '')
+          : d.title.toLowerCase().replace(/\s+/g, '-'))
       }));
       buildDocList(state.docs);
       if (location.hash.length > 1) {
         onHashChange();
+      } else {
+        renderDashboard();
       }
     })();
   </script>

@@ -485,6 +485,253 @@ body {
   }
 }
 
+/* ===== Dashboard ===== */
+
+/* 대시보드 모드: main__inner의 max-width 제한 해제 */
+.main__inner--dashboard {
+  max-width: none;
+}
+
+/* 통계 영역 */
+.dashboard-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.stat-chip__count {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* 필터 탭 */
+.dashboard-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.filter-tab {
+  padding: 6px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.filter-tab:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+}
+
+.filter-tab--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.filter-tab--active:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .filter-tab--active {
+    color: #0f0f1a;
+  }
+  .filter-tab--active:hover {
+    color: #0f0f1a;
+  }
+}
+
+/* 카드 그리드 */
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .doc-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .doc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 빈 상태 */
+.doc-grid__empty {
+  grid-column: 1 / -1;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* 개별 카드 */
+.doc-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  outline-offset: 2px;
+}
+
+.doc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: var(--color-accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .doc-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.doc-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+}
+
+/* 카드 — 카테고리 태그 */
+.doc-card__category {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  align-self: flex-start;
+}
+
+.doc-card__category--game {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.doc-card__category--player {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.doc-card__category--market {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.doc-card__category--liveops {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.doc-card__category--funnel {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.doc-card__category--etc {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+@media (prefers-color-scheme: dark) {
+  .doc-card__category--player {
+    background: #064e3b;
+    color: #6ee7b7;
+  }
+  .doc-card__category--market {
+    background: #451a03;
+    color: #fcd34d;
+  }
+  .doc-card__category--liveops {
+    background: #2e1065;
+    color: #c4b5fd;
+  }
+  .doc-card__category--funnel {
+    background: #450a0a;
+    color: #fca5a5;
+  }
+}
+
+/* 카드 — 제목 */
+.doc-card__title {
+  font-size: 0.975rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  flex: 1;
+}
+
+/* 카드 — 날짜 */
+.doc-card__date {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-bottom: 14px;
+}
+
+/* 카드 — 배지 영역 */
+.doc-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+/* ===== Dashboard 헤딩 영역 ===== */
+
+.dashboard-heading {
+  margin-bottom: 24px;
+}
+
+.dashboard-heading__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.dashboard-heading__sub {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
 /* ===== Print ===== */
 
 @media print {
