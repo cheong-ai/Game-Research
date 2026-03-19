@@ -283,11 +283,11 @@
            </div>`
         : '';
       return `<div class="meta-card ${thumbnail ? 'meta-card--has-thumb' : ''}">
+        ${thumbHtml}
         <div class="meta-card__info">
           <div class="meta-card__title">${meta.title}</div>
           ${rows.join('\n')}
         </div>
-        ${thumbHtml}
       </div>`;
     }
 
