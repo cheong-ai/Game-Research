@@ -397,6 +397,41 @@ body.has-toc .toc-panel {
   margin-bottom: 32px;
 }
 
+.meta-card--has-thumb {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.meta-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta-card__thumb {
+  flex-shrink: 0;
+  width: 200px;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.meta-card__thumb img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius);
+}
+
+@media (max-width: 640px) {
+  .meta-card--has-thumb {
+    flex-direction: column;
+  }
+  .meta-card__thumb {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
 .meta-card__title {
   font-size: 0.75rem;
   font-weight: 600;

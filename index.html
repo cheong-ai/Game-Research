@@ -253,7 +253,7 @@
 
     /* ===== Meta Card (Document header) ===== */
 
-    function renderMetaCard(meta) {
+    function renderMetaCard(meta, thumbnail) {
       if (!meta.title) return '';
       const rows = [];
       if (meta.date) {
@@ -276,9 +276,18 @@
           ${tags.map(p => `<span class="badge badge--platform">${p}</span>`).join('')}
         </div>`);
       }
-      return `<div class="meta-card">
-        <div class="meta-card__title">${meta.title}</div>
-        ${rows.join('\n')}
+      const thumbHtml = thumbnail
+        ? `<div class="meta-card__thumb">
+            <img src="${thumbnail}" alt="${meta.title}" loading="lazy"
+              onerror="this.parentElement.style.display='none'">
+           </div>`
+        : '';
+      return `<div class="meta-card ${thumbnail ? 'meta-card--has-thumb' : ''}">
+        <div class="meta-card__info">
+          <div class="meta-card__title">${meta.title}</div>
+          ${rows.join('\n')}
+        </div>
+        ${thumbHtml}
       </div>`;
     }
 
@@ -433,7 +442,7 @@
       const { meta, body } = parseFrontmatter(text);
 
       const html = marked.parse(body);
-      mainContent.innerHTML = renderMetaCard(meta) + `<div class="content">${html}</div>`;
+      mainContent.innerHTML = renderMetaCard(meta, doc.thumbnail) + `<div class="content">${html}</div>`;
 
       buildToc(mainContent.querySelector('.content'));
       window.scrollTo(0, 0);
