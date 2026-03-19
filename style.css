@@ -575,34 +575,6 @@ body.has-toc .toc-panel {
   max-width: none;
 }
 
-/* 통계 영역 */
-.dashboard-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.stat-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 100px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.stat-chip__count {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--color-accent);
-}
-
 /* 필터 탭 */
 .dashboard-filters {
   display: flex;
@@ -641,12 +613,29 @@ body.has-toc .toc-panel {
   color: #ffffff;
 }
 
+.filter-tab__count {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 7px;
+  border-radius: 100px;
+  margin-left: 4px;
+}
+
+.filter-tab--active .filter-tab__count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 @media (prefers-color-scheme: dark) {
   .filter-tab--active {
     color: #0f0f1a;
   }
   .filter-tab--active:hover {
     color: #0f0f1a;
+  }
+  .filter-tab__count {
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 

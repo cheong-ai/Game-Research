@@ -282,38 +282,19 @@
       </div>`;
     }
 
-    /* ===== Dashboard Stats ===== */
+    /* ===== Filter Tabs (with counts) ===== */
 
-    function renderStats(docs) {
-      const total = docs.length;
+    function renderFilterTabs(docs, activeFilter) {
       const counts = {};
       for (const doc of docs) {
         const cat = doc.category || 'etc';
         counts[cat] = (counts[cat] || 0) + 1;
       }
-      const catChips = Object.entries(counts)
-        .map(([cat, n]) => `<div class="stat-chip">
-          <span>${CATEGORY_LABELS[cat] || cat}</span>
-          <span class="stat-chip__count">${n}</span>
-        </div>`).join('');
-      return `<div class="dashboard-stats" role="region" aria-label="문서 통계">
-          <div class="stat-chip">
-            <span>전체 문서</span>
-            <span class="stat-chip__count">${total}</span>
-          </div>
-          ${catChips}
-        </div>`;
-    }
-
-    /* ===== Filter Tabs ===== */
-
-    function renderFilterTabs(docs, activeFilter) {
-      const cats = [...new Set(docs.map(d => d.category || 'etc'))];
       const allTab = `<button class="filter-tab ${activeFilter === 'all' ? 'filter-tab--active' : ''}"
-        data-filter="all" aria-pressed="${activeFilter === 'all'}">전체</button>`;
-      const catTabs = cats.map(cat =>
+        data-filter="all" aria-pressed="${activeFilter === 'all'}">전체 <span class="filter-tab__count">${docs.length}</span></button>`;
+      const catTabs = Object.entries(counts).map(([cat, n]) =>
         `<button class="filter-tab ${activeFilter === cat ? 'filter-tab--active' : ''}"
-          data-filter="${cat}" aria-pressed="${activeFilter === cat}">${CATEGORY_LABELS[cat] || cat}</button>`
+          data-filter="${cat}" aria-pressed="${activeFilter === cat}">${CATEGORY_LABELS[cat] || cat} <span class="filter-tab__count">${n}</span></button>`
       ).join('');
       return `<div class="dashboard-filters" role="group" aria-label="카테고리 필터">${allTab}${catTabs}</div>`;
     }
@@ -398,7 +379,6 @@
           <div class="dashboard-heading__title">리서치 문서</div>
           <div class="dashboard-heading__sub">분석 문서를 선택해 내용을 확인하세요.</div>
         </div>
-        ${renderStats(state.docs)}
         ${renderFilterTabs(state.docs, state.filter)}
         <div class="doc-grid" role="list" aria-label="문서 목록">
           ${cardsHtml}
