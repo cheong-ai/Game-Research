@@ -443,7 +443,7 @@ body.has-toc .toc-panel {
     flex-direction: column;
   }
   .meta-card--has-thumb .meta-card__info {
-    padding: 16px 20px 20px;
+    padding: 12px 16px 16px;
   }
   .meta-card__thumb {
     width: 100%;
