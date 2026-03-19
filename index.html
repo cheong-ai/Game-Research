@@ -285,7 +285,6 @@
       return `<div class="meta-card ${thumbnail ? 'meta-card--has-thumb' : ''}">
         ${thumbHtml}
         <div class="meta-card__info">
-          <div class="meta-card__title">${meta.title}</div>
           ${rows.join('\n')}
         </div>
       </div>`;
@@ -442,7 +441,13 @@
       const { meta, body } = parseFrontmatter(text);
 
       const html = marked.parse(body);
-      mainContent.innerHTML = renderMetaCard(meta, doc.thumbnail) + `<div class="content">${html}</div>`;
+      // h1을 추출하여 상단에 별도 배치, 본문에서는 제거
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      const firstH1 = tmp.querySelector('h1');
+      const titleHtml = firstH1 ? `<h1 class="doc-title">${firstH1.innerHTML}</h1>` : '';
+      if (firstH1) firstH1.remove();
+      mainContent.innerHTML = titleHtml + renderMetaCard(meta, doc.thumbnail) + `<div class="content">${tmp.innerHTML}</div>`;
 
       buildToc(mainContent.querySelector('.content'));
       window.scrollTo(0, 0);
