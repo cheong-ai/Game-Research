@@ -7,7 +7,7 @@
       "date": "2026-03-18",
       "genre": ["생활 시뮬레이션", "샌드박스", "크래프팅"],
       "platform": ["Nintendo Switch 2"],
-      "thumbnail": "https://www.pokemon.com/static-assets/content-assets/cms2/img/video-games/_tiles/pokemon-legends-z-a/169/image.jpg",
+      "thumbnail": "https://assets.nintendo.com/image/upload/q_auto/f_auto/store/software/switch2/70010000107421/ccb2d70f7ad6878b78d366898a0f0baf94a2d3350b76725c88b591453a797502",
       "thumbnailGradient": "linear-gradient(135deg, #FFD700 0%, #FF6B35 50%, #C0392B 100%)"
     },
     {
@@ -37,7 +37,7 @@
       "date": "2026-03-18",
       "genre": ["인크리멘탈", "로그라이트"],
       "platform": ["모바일", "PC", "콘솔"],
-      "thumbnail": null,
+      "thumbnail": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1794680/header.jpg",
       "thumbnailGradient": "linear-gradient(135deg, #134e5e 0%, #71b280 100%)"
     }
   ]
