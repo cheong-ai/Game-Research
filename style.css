@@ -461,10 +461,10 @@ body.has-toc .toc-panel {
 }
 
 .meta-card__row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 52px 1fr;
   gap: 10px;
+  align-items: baseline;
   margin-bottom: 10px;
 }
 
@@ -476,7 +476,14 @@ body.has-toc .toc-panel {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-text-secondary);
-  min-width: 60px;
+  white-space: nowrap;
+}
+
+.meta-card__values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
 }
 
 .badge {

@@ -259,21 +259,21 @@
       if (meta.date) {
         rows.push(`<div class="meta-card__row">
           <span class="meta-card__label">날짜</span>
-          <span class="badge badge--default">${meta.date}</span>
+          <div class="meta-card__values"><span class="badge badge--default">${meta.date}</span></div>
         </div>`);
       }
       if (meta.genre) {
         const tags = Array.isArray(meta.genre) ? meta.genre : [meta.genre];
         rows.push(`<div class="meta-card__row">
           <span class="meta-card__label">장르</span>
-          ${tags.map(g => `<span class="badge badge--genre">${g}</span>`).join('')}
+          <div class="meta-card__values">${tags.map(g => `<span class="badge badge--genre">${g}</span>`).join('')}</div>
         </div>`);
       }
       if (meta.platform) {
         const tags = Array.isArray(meta.platform) ? meta.platform : [meta.platform];
         rows.push(`<div class="meta-card__row">
           <span class="meta-card__label">플랫폼</span>
-          ${tags.map(p => `<span class="badge badge--platform">${p}</span>`).join('')}
+          <div class="meta-card__values">${tags.map(p => `<span class="badge badge--platform">${p}</span>`).join('')}</div>
         </div>`);
       }
       const thumbHtml = thumbnail
