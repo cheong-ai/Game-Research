@@ -410,36 +410,44 @@ body.has-toc .toc-panel {
 
 .meta-card--has-thumb {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 24px;
+  padding: 0;
+  overflow: hidden;
 }
 
-.meta-card__info {
+.meta-card--has-thumb .meta-card__info {
   flex: 1;
   min-width: 0;
+  padding: 20px 24px 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .meta-card__thumb {
   flex-shrink: 0;
-  width: 200px;
-  border-radius: var(--radius);
+  width: 220px;
   overflow: hidden;
 }
 
 .meta-card__thumb img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
-  border-radius: var(--radius);
 }
 
 @media (max-width: 640px) {
   .meta-card--has-thumb {
     flex-direction: column;
   }
+  .meta-card--has-thumb .meta-card__info {
+    padding: 16px 20px 20px;
+  }
   .meta-card__thumb {
     width: 100%;
-    max-width: 280px;
+    height: 180px;
   }
 }
 
@@ -456,8 +464,8 @@ body.has-toc .toc-panel {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .meta-card__row:last-child {
@@ -465,7 +473,7 @@ body.has-toc .toc-panel {
 }
 
 .meta-card__label {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-text-secondary);
   min-width: 60px;
@@ -473,7 +481,7 @@ body.has-toc .toc-panel {
 
 .badge {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 600;
   padding: 2px 10px;
   border-radius: 100px;
